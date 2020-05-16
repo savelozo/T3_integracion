@@ -1,11 +1,9 @@
-//import React from 'react';
-//import logo from '../../logo.svg';
 import './App.css';
 import React from "react";
 import io from "socket.io-client";
 
 //import { Button } from 'react-bootstrap/Button';
-import { Container, Row, Col, Button } from 'react-bootstrap';
+import { Container, Row, Col, Button, Navbar, Nav } from 'react-bootstrap';
 
 class Home extends React.Component {
 
@@ -28,17 +26,17 @@ class Home extends React.Component {
 
   handleUpdate(data) {
     console.log('UPDATE');
-    //console.log(data);
+    console.log(data);
   }
 
   handleBuy(data) {
     console.log('BUY');
-    //console.log(data);
+    console.log(data);
   }
 
   handleSell(data) {
     console.log('SELL');
-    //console.log(data);
+    console.log(data);
   }
 
   handleConnect() {
@@ -47,11 +45,11 @@ class Home extends React.Component {
     }))
     if (this.state.isConnected){
       console.log('DESCONECTADO');
-      this.socket.disconnect()
+      this.socket.disconnect();
     }
     else {
       console.log('CONECTADO');
-      this.socket.connect()
+      this.socket.connect();
       this.socket.on('UPDATE', this.handleUpdate);
       this.socket.on('BUY', this.handleBuy);
       this.socket.on('SELL', this.handleSell);
@@ -61,37 +59,22 @@ class Home extends React.Component {
   render(){
     return (
       <div>
-        <Button variant="primary" onClick={this.handleConnect}>
-            {this.state.isConnected ? 'Desconectar' : 'Conectar'}
-        </Button>
+
+        <Navbar bg="dark" variant="dark" sticky='top'>
+          <Nav.Item className="ml-auto">
+            <Button variant="dark" onClick={this.handleConnect}>
+                {this.state.isConnected ? 'Desconectar' : 'Conectar'}
+            </Button>
+          </Nav.Item>
+        </Navbar>
+
+        <Container fluid>
+
+        </Container>
+
       </div>);
   };
 
 }
-
-// function App() {
-//
-//   const socket = io('wss://​le-18262636.bitzonte.com',{
-//     path: '/stocks',
-//   });
-//
-//   // socket.on('connect', () => {
-//   //   console.log("Conectado");
-//   //   console.log(socket.connected);
-//   // });
-//
-//   //Listener
-//   socket.on('UPDATE', function(data){
-//      try {
-//         console.log(data);
-//      } catch(e) {
-//        console.log(e);
-//      }
-//   });
-//
-//   return (
-//     <p>Conectado: {socket.id}</p>
-//   );
-// }
 
 export default Home;
