@@ -215,7 +215,7 @@ export class CardChart extends React.Component {
       flipOnClick={true}
       flipDirection="horizontal"
       ref={(r) => this.flippy = r}
-      style={{ width: '200px', height: '200px', padding:'5%' }} /// these are optional style, it is not necessary
+      style={{ width: '200px', height: '200px', padding:'5%' }}
     >
       <FrontSide
         style={{
