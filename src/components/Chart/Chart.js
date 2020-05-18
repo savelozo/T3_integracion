@@ -1,23 +1,9 @@
 import React from 'react';
 import './Chart.css';
-//import { Container } from 'react-bootstrap';
+import { ListGroup, Container, Row, Col } from 'react-bootstrap';
 import Chart from "chart.js";
 import io from "socket.io-client";
 
-const state = {
-  labels: [0, 1, 2, 3, 4],
-  datasets: [
-    {
-      label: 'Rainfall',
-      fill: false,
-      lineTension: 0.5,
-      backgroundColor: 'rgba(75,192,192,1)',
-      borderColor: 'rgba(0,0,0,1)',
-      borderWidth: 2,
-      data: [65, 59, 80, 81, 56]
-    }
-  ]
-}
 
 class LineChart extends React.Component {
   constructor(props) {
@@ -28,19 +14,48 @@ class LineChart extends React.Component {
       path: '/stocks',
     });
 
-    this.state = {isConnected: props.isConnected}
+    this.state = {isConnected: props.isConnected, min: 0, vol: 0, last: null, max: null, var: null}
     this.socket = socket
     this.handleUpdate = this.handleUpdate.bind(this);
+    this.handleMovements = this.handleMovements.bind(this);
+    this.socket.on('BUY', this.handleMovements);
+    this.socket.on('SELL', this.handleMovements);
     this.socket.on('UPDATE', this.handleUpdate);
     this.chartRef = React.createRef();
   }
 
+  handleMovements(data) {
+    if (this.props.isConnected && this.props.name === data.ticker){
+      this.setState(state => ({
+        vol: state.vol + data.volume,
+      }))
+    }
+  }
+
   handleUpdate(data) {
     if (this.props.isConnected && this.props.name === data.ticker){
-      console.log(data)
-      //this.myChart.data.labels = this.props.data.map(d => d.time);
-      //this.myChart.data.datasets[0].data = this.props.data.map(d => d.value);
-      //this.myChart.update();
+
+      this.LineChart.data.labels.push(new Date(data.time));
+      this.LineChart.data.datasets[0].data.push(data.value)
+      this.setState({
+        last: data.value
+      })
+
+      if (data.value < this.state.min || this.state.min === 0){
+        this.setState({
+          min: data.value,
+          var: this.state.last / data.value
+        })
+        this.LineChart.options.scales.yAxes[0].ticks.min = data.value - 5
+      }
+
+      if (data.value > this.state.max){
+        this.setState({
+          max: data.value
+        })
+      }
+
+      this.LineChart.update();
     }
   }
 
@@ -56,7 +71,7 @@ class LineChart extends React.Component {
   }
 
   componentDidMount() {
-    this.myChart = new Chart(this.chartRef.current, {
+    this.LineChart = new Chart(this.chartRef.current, {
       type: 'line',
       options: {
         scales: {
@@ -64,24 +79,27 @@ class LineChart extends React.Component {
             {
               type: 'time',
               time: {
-                unit: 'week'
-              }
+                unit: 'minute'
+              },
             }
           ],
           yAxes: [
             {
               ticks: {
-                min: 0
-              }
+                min: this.state.min
+              },
+              gridLines: {
+                display: false,
+                drawBorder: true
+            }
             }
           ]
         }
       },
       data: {
-        labels: [1,2,3,4,5],
+        labels: [],
         datasets: [{
-          label: this.props.name,
-          data: [100,200,500,400,120],
+          data: [],
           fill: 'none',
           backgroundColor: 'blue',
           pointRadius: 2,
@@ -95,64 +113,54 @@ class LineChart extends React.Component {
 
     render(){
       return (
-        <div>
-          <canvas ref={this.chartRef} width="400" height="400" hidden={!this.props.isConnected}/>
-        </div>);
+      <div>
+        <br></br>
+        <Container fluid style={{ padding:'2%'}}>
+            <Row style={{ alignItems:'center' }}>
+              <Col sm={8} style={{ alignItems:'center' }}>
+                {this.props.isConnected &&
+                  <h1>{this.props.name}</h1>
+                }
+
+                <canvas ref={this.chartRef} hidden={!this.props.isConnected}/>
+              </Col>
+              <Col sm={4} style={{ alignItems:'center' }}>
+
+                <ListGroup horizontal style={{ width: '10rem', padding:'2%'}} hidden={!this.props.isConnected}>
+                  <ListGroup.Item action variant="dark" style={{ width: '150px'}}><b>Precio Máximo</b></ListGroup.Item>
+                  <ListGroup.Item style={{ width: '100px'}}>{this.state.max}</ListGroup.Item>
+                </ListGroup>
+
+
+                <ListGroup horizontal style={{ width: '10rem', padding:'2%' }} hidden={!this.props.isConnected}>
+                  <ListGroup.Item action variant="dark" style={{ width: '150px'}}><b>Precio Mínimo</b></ListGroup.Item>
+                  <ListGroup.Item style={{ width: '100px'}}>{this.state.min}</ListGroup.Item>
+                </ListGroup>
+
+
+               <ListGroup horizontal style={{ width: '10rem', padding:'2%' }} hidden={!this.props.isConnected}>
+                  <ListGroup.Item action variant="dark" style={{ width: '150px'}}><b>Último Precio</b></ListGroup.Item>
+                  <ListGroup.Item style={{ width: '100px'}}>{this.state.last}</ListGroup.Item>
+                </ListGroup>
+
+
+               <ListGroup horizontal style={{ width: '10rem', padding:'2%' }} hidden={!this.props.isConnected}>
+                  <ListGroup.Item action variant="dark" style={{ width: '150px'}}><b>Volumen Transado</b></ListGroup.Item>
+                  <ListGroup.Item style={{ width: '100px'}}>{this.state.vol}</ListGroup.Item>
+                </ListGroup>
+
+                <ListGroup horizontal style={{ width: '10rem', padding:'2%' }} hidden={!this.props.isConnected}>
+                   <ListGroup.Item action variant="dark" style={{ width: '150px'}}><b>Variación Porcentual</b></ListGroup.Item>
+                   <ListGroup.Item style={{ width: '100px'}}>{this.state.var}%</ListGroup.Item>
+                 </ListGroup>
+
+              </Col>
+            </Row>
+          </Container>
+      </div>
+
+      )
     };
 }
-
-// class LineGraph extends React.Component {
-//
-//   constructor(props){
-//     super(props);
-//
-//     const socket = io('wss://​le-18262636.bitzonte.com',{
-//       autoConnect: false,
-//       path: '/stocks',
-//     });
-//
-//     this.state = {isConnected: props.isConnected}
-//     this.socket = socket
-//     this.handleUpdate = this.handleUpdate.bind(this);
-//     this.socket.on('UPDATE', this.handleUpdate);
-//     this.chartRef = React.createRef();
-//   }
-//
-//
-//   handleUpdate(data) {
-//     if (this.props.isConnected){
-//       // console.log(this.LineChart)
-//       // this.LineChart.props.data.datasets[0].data[2] = 50;
-//       // this.LineChart.redraw(true);
-//     }
-//   }
-//
-//   componentDidUpdate(oldProps) {
-//     const newProps = this.props
-//
-//     if(newProps.isConnected) {
-//       this.socket.connect()
-//     }
-//     else {
-//       this.socket.disconnect()
-//     }
-//   }
-//
-//   componentDidMount() {
-//     this.Chart = new Chart(this.chartRef.current, {
-//       type: 'line'
-//     });
-//   }
-//
-//   render(){
-//     return (
-//       <div>
-//         {this.props.isConnected &&
-//           <canvas ref={this.chartRef} width="400" height="400"/>
-//         }
-//       </div>);
-//   };
-//
-// }
 
 export default LineChart;
