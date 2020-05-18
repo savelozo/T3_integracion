@@ -1,7 +1,7 @@
 import React from 'react';
 import './ChartList.css';
-import { Container } from 'react-bootstrap';
-import LineChart from '../Chart/Chart'
+import { Container, CardDeck } from 'react-bootstrap';
+import { LineChart, CardChart } from '../Chart/Chart'
 import io from "socket.io-client";
 
 class ChartList extends React.Component {
@@ -14,17 +14,18 @@ class ChartList extends React.Component {
       path: '/stocks',
     });
 
-    this.state = {'stockCharts':[], 'isConnected': props.isConnected}
+    this.state = {'Charts':[], 'isConnected': props.isConnected, 'data_ready': false}
     this.socket = socket
     this.socket.connect()
     this.handleStocks = this.handleStocks.bind(this)
-    this.socket.on('STOCKS', this.handleStocks);
-    this.socket.emit('STOCKS');
+    this.socket.on(props.type, this.handleStocks);
+    this.socket.emit(props.type);
   }
 
   handleStocks(data) {
     this.setState({
-      'stockCharts': data
+      'Charts': data,
+      'data_ready': true
     })
   }
 
@@ -39,18 +40,49 @@ class ChartList extends React.Component {
   }
 
   render(){
+    if (this.props.type === 'STOCKS') {
 
-    return (
-          <div>
-            <Container fluid>
-              <ul>
-                {this.state.stockCharts.map((stock) =>
-                                              <LineChart key={stock.ticker}
-                                              name={stock.ticker}
-                                              isConnected={this.props.isConnected} />)}
-              </ul>
-            </Container>
-          </div>);
+      return (
+            <div>
+              <div style={{ padding:'2%' }}>
+                {this.props.isConnected &&
+                      <h1>Mercados de Acciones</h1>}
+              </div>
+              <Container fluid>
+                <ul>
+                  {this.state.Charts.map((stock) =>
+                                                <LineChart key={stock.ticker}
+                                                name={stock.ticker}
+                                                isConnected={this.props.isConnected} />)}
+                </ul>
+              </Container>
+            </div>);
+
+    }
+
+    else {
+      return (
+            <div>
+              <div style={{ padding:'2%' }}>
+                {this.props.isConnected &&
+                      <h1>Mercados Abiertos</h1>}
+              </div>
+              <Container fluid>
+                <ul>
+                  <CardDeck hidden={!this.props.isConnected}>
+                    {this.state.data_ready &&
+                      Object.keys(this.state.Charts).map((key, index) =>
+                                                    <CardChart key={this.state.Charts[key].name}
+                                                    name={this.state.Charts[key].name}
+                                                    ticker={this.state.Charts[key].exchange_ticker}
+                                                    country={this.state.Charts[key].country}
+                                                    companies={this.state.Charts[key].listed_companies}
+                                                    isConnected={this.props.isConnected} />)}
+                  </CardDeck>
+                </ul>
+              </Container>
+            </div>);
+    }
 
   };
 

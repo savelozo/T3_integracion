@@ -3,9 +3,9 @@ import './Chart.css';
 import { ListGroup, Container, Row, Col } from 'react-bootstrap';
 import Chart from "chart.js";
 import io from "socket.io-client";
+import Flippy, { FrontSide, BackSide } from 'react-flippy';
 
-
-class LineChart extends React.Component {
+export class LineChart extends React.Component {
   constructor(props) {
     super(props);
 
@@ -97,9 +97,9 @@ class LineChart extends React.Component {
         }
       },
       data: {
-        labels: [],
         datasets: [{
           data: [],
+          label: 'Precio de la acción',
           fill: 'none',
           backgroundColor: 'blue',
           pointRadius: 2,
@@ -163,4 +163,85 @@ class LineChart extends React.Component {
     };
 }
 
-export default LineChart;
+export class CardChart extends React.Component {
+  constructor(props) {
+    super(props);
+
+    const socket = io('wss://​le-18262636.bitzonte.com',{
+      autoConnect: false,
+      path: '/stocks',
+    });
+
+    this.state = {isConnected: props.isConnected, buy: 0, sell: 0, vol: null, stocks: null}
+    this.socket = socket
+    this.handleUpdate = this.handleUpdate.bind(this);
+    this.handleBuy = this.handleBuy.bind(this);
+    this.handleSell = this.handleSell.bind(this);
+    this.socket.on('BUY', this.handleMovements);
+    this.socket.on('SELL', this.handleMovements);
+    this.chartRef = React.createRef();
+  }
+
+  handleBuy(data) {
+
+  }
+
+  handleSell(data) {
+    if (this.props.isConnected && this.props.name === data.ticker){
+      this.setState(state => ({
+        vol: state.vol + data.volume,
+      }))
+    }
+  }
+
+  handleUpdate(data) {
+
+  }
+
+  componentDidUpdate(oldProps) {
+    const newProps = this.props
+
+    if(newProps.isConnected) {
+      this.socket.connect()
+    }
+    else {
+      this.socket.disconnect()
+    }
+  }
+
+  componentDidMount() {
+    this.card = <Flippy
+      flipOnHover={false}
+      flipOnClick={true}
+      flipDirection="horizontal"
+      ref={(r) => this.flippy = r}
+      style={{ width: '200px', height: '200px', padding:'5%' }} /// these are optional style, it is not necessary
+    >
+      <FrontSide
+        style={{
+          backgroundColor: 'white',
+        }}
+      >
+        {this.props.name}
+      </FrontSide>
+      <BackSide
+        style={{ backgroundColor: 'white'}}>
+        {this.props.companies}
+      </BackSide>
+    </Flippy>
+  }
+
+    render(){
+      return (
+        <div>
+          <br></br>
+          <Container fluid style={{ padding:'2%'}}>
+            {this.card}
+          </Container>
+        </div>
+      )
+    };
+}
+
+//export default BarChart;
+//export default LineChart;
