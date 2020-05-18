@@ -2,8 +2,8 @@ import './App.css';
 import React from "react";
 import io from "socket.io-client";
 
-//import { Button } from 'react-bootstrap/Button';
-import { Container, Row, Col, Button, Navbar, Nav } from 'react-bootstrap';
+import { Container, Button, Navbar, Nav } from 'react-bootstrap';
+import ChartList from '../ChartList/ChartList'
 
 class Home extends React.Component {
 
@@ -17,43 +17,15 @@ class Home extends React.Component {
 
     this.state = {isConnected: false}
     this.socket = socket
-    // Este enlace es necesario para hacer que `this` funcione en el callback
-    this.handleUpdate = this.handleUpdate.bind(this);
-    this.handleBuy = this.handleBuy.bind(this);
-    this.handleSell = this.handleSell.bind(this);
     this.handleConnect = this.handleConnect.bind(this);
   }
 
-  handleUpdate(data) {
-    console.log('UPDATE');
-    console.log(data);
-  }
-
-  handleBuy(data) {
-    console.log('BUY');
-    console.log(data);
-  }
-
-  handleSell(data) {
-    console.log('SELL');
-    console.log(data);
-  }
-
   handleConnect() {
+
     this.setState(state => ({
       isConnected: !state.isConnected
     }))
-    if (this.state.isConnected){
-      console.log('DESCONECTADO');
-      this.socket.disconnect();
-    }
-    else {
-      console.log('CONECTADO');
-      this.socket.connect();
-      this.socket.on('UPDATE', this.handleUpdate);
-      this.socket.on('BUY', this.handleBuy);
-      this.socket.on('SELL', this.handleSell);
-    };
+
   }
 
   render(){
@@ -69,8 +41,8 @@ class Home extends React.Component {
         </Navbar>
 
         <Container fluid>
-
-        </Container>
+          <ChartList isConnected={this.state.isConnected} />
+        </Container>        
 
       </div>);
   };
